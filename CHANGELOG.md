@@ -1,4 +1,4 @@
-## 1.20260614.1215351
+## 1.20260615.1070036
 
 A player-agnostic local caching proxy for streaming video. Caches only the byte
 ranges a player actually reads (not whole files), with an LRU size cap.
