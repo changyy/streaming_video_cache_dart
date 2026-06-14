@@ -1,0 +1,20 @@
+name: streaming_video_cache
+description: >-
+  A player-agnostic local caching proxy for streaming video. Caches only the
+  byte ranges actually played (not whole files), with an LRU size cap, so
+  replays use no network — works with video_player or any HTTP player.
+version: 1.20260614.1210126
+repository: https://github.com/changyy/streaming_video_cache_dart
+homepage: https://github.com/changyy/streaming_video_cache_dart
+topics:
+  - video
+  - cache
+  - streaming
+  - proxy
+
+environment:
+  sdk: ^3.11.1
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6
