@@ -1,5 +1,8 @@
 # streaming_video_cache
 
+[![Pub Version](https://img.shields.io/pub/v/streaming_video_cache)](https://pub.dev/packages/streaming_video_cache)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A **player-agnostic local caching proxy** for streaming video whose defining
 feature is **partial-length caching**: it stores only the portion of each video
 that is actually played — **not the whole file** — with an LRU size cap, so
@@ -70,9 +73,13 @@ await cache.stop();
 
 ## API
 
-- `VideoCacheServer({store, upstream, upstreamTimeout, onLog})` — `start()` /
-  `stop()`, `localUrlFor(url, {headers, cacheKey})`, `pin(keys)`, `usage()`,
-  `VideoCacheServer.keyForUrl(url)` (Drive id or stable hash).
+- `VideoCacheServer({store, upstream, upstreamTimeout, onLog, onCacheStatus})` —
+  `start()` / `stop()`, `localUrlFor(url, {headers, cacheKey})`, `pin(keys)`,
+  `usage()`, `VideoCacheServer.keyForUrl(url)` (Drive id or stable hash).
+  - `onCacheStatus(key, hit)` — **low-frequency**: fires once per key on first
+    touch (a quiet per-clip HIT/MISS log).
+  - `onLog(message)` — **high-frequency** verbose trace, one line per
+    request/chunk; opt-in for debugging stalls.
 - `CacheStore` — storage interface (chunk-addressed). `RangeCacheStore` is the
   default file-backed impl: `RangeCacheStore({directory, maxBytes, chunkSize})`
   with `init()`, `usage()`, `pin()`, `evictKey()`, `clear()`. `maxBytes <= 0`

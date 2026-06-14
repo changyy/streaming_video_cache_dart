@@ -31,21 +31,30 @@ class VideoCacheServer {
     UpstreamClient? upstream,
     Duration upstreamTimeout = const Duration(seconds: 30),
     this.onLog,
+    this.onCacheStatus,
   }) : _upstream = upstream ?? HttpClientUpstream(timeout: upstreamTimeout);
 
   final CacheStore store;
   final UpstreamClient _upstream;
 
-  /// Optional diagnostics sink. When set, the server emits one-line, timed
-  /// traces of every request (range, cache hits/misses, upstream fetch ms,
-  /// total served ms, disconnects). Off by default so library consumers get no
-  /// console noise; wire it to your logger to diagnose stalls.
+  /// Verbose diagnostics sink — one timed line PER request/chunk (range, fetch
+  /// ms, served ms, disconnects). High-frequency; off by default. Wire it only
+  /// when debugging stalls.
   final void Function(String message)? onLog;
+
+  /// Low-frequency status sink — fires ONCE the first time each [cacheKey] is
+  /// requested in this server's lifetime, with whether its first byte range was
+  /// already resident (`true` = cache hit) or had to be downloaded (`false` =
+  /// miss). Use this for a quiet per-clip "HIT/MISS" log instead of [onLog].
+  final void Function(String cacheKey, bool servedFromCache)? onCacheStatus;
 
   void _log(String message) => onLog?.call(message);
 
   HttpServer? _server;
   final Map<String, _Origin> _origins = <String, _Origin>{};
+
+  /// Keys already reported via [onCacheStatus] (announce once per lifetime).
+  final Set<String> _statusAnnounced = <String>{};
 
   /// In-flight upstream chunk fetches, keyed by `"$cacheKey:$chunkIndex"`, so
   /// concurrent misses for the same chunk share one fetch instead of N.
@@ -162,6 +171,11 @@ class VideoCacheServer {
         return;
       }
       end = end.clamp(0, total - 1);
+
+      // Low-frequency: announce HIT/MISS once, the first time this key is hit.
+      if (onCacheStatus != null && _statusAnnounced.add(key)) {
+        onCacheStatus!(key, store.hasChunk(key, start ~/ store.chunkSize));
+      }
 
       res.statusCode = partial ? HttpStatus.partialContent : HttpStatus.ok;
       res.headers.set(HttpHeaders.acceptRangesHeader, 'bytes');
